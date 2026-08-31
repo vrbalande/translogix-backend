@@ -1,33 +1,101 @@
-HELP.md
+# =========================================================
+# TRANSLOGIX - Spring Boot / Maven
+# =========================================================
+
+# -------------------------
+# Maven / Build
+# -------------------------
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+build/
+out/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Maven generated files
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# Keep Maven Wrapper JAR
+!.mvn/wrapper/maven-wrapper.jar
+
+
+# -------------------------
+# Java
+# -------------------------
+*.class
+*.log
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
+
+
+# -------------------------
+# IntelliJ IDEA
+# -------------------------
+.idea/
 *.iml
 *.ipr
+*.iws
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# -------------------------
+# Eclipse / STS
+# -------------------------
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache/
+
+
+# -------------------------
+# VS Code
+# -------------------------
 .vscode/
+*.code-workspace
+
+
+# -------------------------
+# OS
+# -------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# -------------------------
+# Environment / Secrets
+# -------------------------
+.env
+.env.local
+.env.*.local
+
+# Local configuration containing passwords / keys
+application-local.properties
+application-local.yml
+application-local.yaml
+
+
+# -------------------------
+# Temporary files
+# -------------------------
+*.tmp
+*.temp
+*.swp
+*~
+
+# -------------------------
+# Node frontend (if frontend exists)
+# -------------------------
+node_modules/
+
+# -------------------------
+# Optional generated files
+# -------------------------
+*.bak
