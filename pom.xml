@@ -6,12 +6,20 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- =====================================================
+         SPRING BOOT
+         ===================================================== -->
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>4.1.1</version>
         <relativePath/>
     </parent>
+
+    <!-- =====================================================
+         PROJECT
+         ===================================================== -->
 
     <groupId>com.translogix</groupId>
     <artifactId>translogix-backend</artifactId>
@@ -20,38 +28,57 @@
     <name>translogix-backend</name>
     <description>Translogix Logistics Backend</description>
 
+    <!-- =====================================================
+         JAVA
+         ===================================================== -->
+
     <properties>
         <java.version>21</java.version>
     </properties>
 
+    <!-- =====================================================
+         DEPENDENCIES
+         ===================================================== -->
+
     <dependencies>
 
+        <!-- Spring Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- Spring Data JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
+        <!-- Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Spring Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- =================================================
+             POSTGRESQL
+             ================================================= -->
+
         <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc</artifactId>
-            <version>13.2.0.jre11</version>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- =================================================
+             JWT
+             ================================================= -->
 
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -73,6 +100,7 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -80,6 +108,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -87,6 +116,10 @@
         </dependency>
 
     </dependencies>
+
+    <!-- =====================================================
+         BUILD
+         ===================================================== -->
 
     <build>
         <plugins>
