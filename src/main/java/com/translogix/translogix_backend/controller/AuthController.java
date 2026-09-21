@@ -11,7 +11,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,10 +22,6 @@ import com.translogix.translogix_backend.security.JwtService;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {
-                "http://127.0.0.1:5500",
-                "http://localhost:5500"
-})
 public class AuthController {
 
         private final UserRepository userRepository;
@@ -46,9 +41,9 @@ public class AuthController {
                 this.jwtService = jwtService;
         }
 
-        // =====================================================
+        // =========================================================
         // REGISTER
-        // =====================================================
+        // =========================================================
 
         @PostMapping("/register")
         public ResponseEntity<?> register(
@@ -64,9 +59,9 @@ public class AuthController {
                                         ? ""
                                         : request.getPassword();
 
-                        // ---------------------------------------------
+                        // -------------------------------------------------
                         // VALIDATION
-                        // ---------------------------------------------
+                        // -------------------------------------------------
 
                         if (username.isBlank()) {
 
@@ -108,25 +103,23 @@ public class AuthController {
                                                                                 "Password must contain at least 6 characters."));
                         }
 
-                        // ---------------------------------------------
-                        // DUPLICATE USERNAME
-                        // ---------------------------------------------
+                        // -------------------------------------------------
+                        // CHECK DUPLICATE USERNAME
+                        // -------------------------------------------------
 
-                        if (userRepository
-                                        .existsByUsername(username)) {
+                        if (userRepository.existsByUsername(username)) {
 
                                 return ResponseEntity
-                                                .status(
-                                                                HttpStatus.CONFLICT)
+                                                .status(HttpStatus.CONFLICT)
                                                 .body(
                                                                 Map.of(
                                                                                 "message",
                                                                                 "Username already exists."));
                         }
 
-                        // ---------------------------------------------
+                        // -------------------------------------------------
                         // ROLE
-                        // ---------------------------------------------
+                        // -------------------------------------------------
 
                         String role = request.getRole();
 
@@ -137,8 +130,11 @@ public class AuthController {
 
                         } else {
 
-                                role = role.trim()
-                                                .toUpperCase();
+                                role = role.trim().toUpperCase();
+
+                                if (role.startsWith("ROLE_")) {
+                                        role = role.substring(5);
+                                }
                         }
 
                         if (!role.equals("USER") &&
@@ -152,33 +148,25 @@ public class AuthController {
                                                                                 "Role must be USER or ADMIN."));
                         }
 
-                        // ---------------------------------------------
+                        // -------------------------------------------------
                         // CREATE USER
-                        // ---------------------------------------------
+                        // -------------------------------------------------
 
                         User user = new User();
 
-                        user.setUsername(
-                                        username);
+                        user.setUsername(username);
 
-                        /*
-                         * VERY IMPORTANT:
-                         * Password must be encoded before
-                         * saving to database.
-                         */
+                        // Password must be encoded before saving
                         user.setPassword(
-                                        passwordEncoder.encode(
-                                                        password));
+                                        passwordEncoder.encode(password));
 
-                        user.setRole(
-                                        role);
+                        user.setRole(role);
 
-                        User savedUser = userRepository.save(
-                                        user);
+                        User savedUser = userRepository.save(user);
 
-                        // ---------------------------------------------
+                        // -------------------------------------------------
                         // RESPONSE
-                        // ---------------------------------------------
+                        // -------------------------------------------------
 
                         Map<String, Object> response = new HashMap<>();
 
@@ -195,8 +183,7 @@ public class AuthController {
                                         savedUser.getRole());
 
                         return ResponseEntity
-                                        .status(
-                                                        HttpStatus.CREATED)
+                                        .status(HttpStatus.CREATED)
                                         .body(response);
 
                 } catch (Exception e) {
@@ -204,8 +191,7 @@ public class AuthController {
                         e.printStackTrace();
 
                         return ResponseEntity
-                                        .status(
-                                                        HttpStatus.INTERNAL_SERVER_ERROR)
+                                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
                                         .body(
                                                         Map.of(
                                                                         "message",
@@ -217,9 +203,9 @@ public class AuthController {
                 }
         }
 
-        // =====================================================
+        // =========================================================
         // LOGIN
-        // =====================================================
+        // =========================================================
 
         @PostMapping("/login")
         public ResponseEntity<?> login(
@@ -229,9 +215,9 @@ public class AuthController {
 
                 String password = loginRequest.get("password");
 
-                // ---------------------------------------------
+                // -------------------------------------------------
                 // VALIDATION
-                // ---------------------------------------------
+                // -------------------------------------------------
 
                 if (username == null ||
                                 username.trim().isEmpty()) {
@@ -268,9 +254,9 @@ public class AuthController {
 
                 try {
 
-                        // ---------------------------------------------
-                        // AUTHENTICATE
-                        // ---------------------------------------------
+                        // -------------------------------------------------
+                        // AUTHENTICATE USER
+                        // -------------------------------------------------
 
                         Authentication authentication = authenticationManager.authenticate(
                                         new UsernamePasswordAuthenticationToken(
@@ -281,16 +267,16 @@ public class AuthController {
                                         "AUTHENTICATION SUCCESS");
 
                         System.out.println(
-                                        "AUTH NAME = " +
-                                                        authentication.getName());
+                                        "AUTH NAME = "
+                                                        + authentication.getName());
 
                         System.out.println(
-                                        "AUTHORITIES = " +
-                                                        authentication.getAuthorities());
+                                        "AUTHORITIES = "
+                                                        + authentication.getAuthorities());
 
-                        // ---------------------------------------------
+                        // -------------------------------------------------
                         // FIND USER
-                        // ---------------------------------------------
+                        // -------------------------------------------------
 
                         User user = userRepository
                                         .findByUsername(username)
@@ -298,9 +284,9 @@ public class AuthController {
                                                         () -> new RuntimeException(
                                                                         "Authenticated user not found in database."));
 
-                        // ---------------------------------------------
-                        // NORMALIZE ROLE
-                        // ---------------------------------------------
+                        // -------------------------------------------------
+                        // ROLE
+                        // -------------------------------------------------
 
                         String role = user.getRole();
 
@@ -311,8 +297,7 @@ public class AuthController {
                                                 "User role is empty.");
                         }
 
-                        role = role.trim()
-                                        .toUpperCase();
+                        role = role.trim().toUpperCase();
 
                         if (role.startsWith("ROLE_")) {
 
@@ -322,9 +307,9 @@ public class AuthController {
                         System.out.println(
                                         "DATABASE ROLE = " + role);
 
-                        // ---------------------------------------------
-                        // JWT
-                        // ---------------------------------------------
+                        // -------------------------------------------------
+                        // GENERATE JWT
+                        // -------------------------------------------------
 
                         String token = jwtService.generateToken(
                                         authentication.getName(),
@@ -333,9 +318,9 @@ public class AuthController {
                         System.out.println(
                                         "JWT GENERATED SUCCESSFULLY");
 
-                        // ---------------------------------------------
+                        // -------------------------------------------------
                         // RESPONSE
-                        // ---------------------------------------------
+                        // -------------------------------------------------
 
                         Map<String, Object> response = new HashMap<>();
 
@@ -361,20 +346,15 @@ public class AuthController {
                         System.out.println(
                                         "========================================");
 
-                        return ResponseEntity.ok(
-                                        response);
+                        return ResponseEntity.ok(response);
 
                 } catch (BadCredentialsException e) {
 
                         System.out.println(
                                         "BAD CREDENTIALS");
 
-                        System.out.println(
-                                        "USERNAME = " + username);
-
                         return ResponseEntity
-                                        .status(
-                                                        HttpStatus.UNAUTHORIZED)
+                                        .status(HttpStatus.UNAUTHORIZED)
                                         .body(
                                                         Map.of(
                                                                         "message",
@@ -385,8 +365,7 @@ public class AuthController {
                         e.printStackTrace();
 
                         return ResponseEntity
-                                        .status(
-                                                        HttpStatus.UNAUTHORIZED)
+                                        .status(HttpStatus.UNAUTHORIZED)
                                         .body(
                                                         Map.of(
                                                                         "message",
@@ -401,15 +380,14 @@ public class AuthController {
                         e.printStackTrace();
 
                         return ResponseEntity
-                                        .status(
-                                                        HttpStatus.INTERNAL_SERVER_ERROR)
+                                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
                                         .body(
                                                         Map.of(
                                                                         "message",
                                                                         "Login server error.",
                                                                         "error",
                                                                         e.getMessage() == null
-                                                                                        ? "Unknown server error"
+                                                                                        ? "Unknown error"
                                                                                         : e.getMessage()));
                 }
         }

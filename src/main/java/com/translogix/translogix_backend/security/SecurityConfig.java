@@ -4,21 +4,15 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.http.HttpMethod;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -30,45 +24,47 @@ public class SecurityConfig {
 
         public SecurityConfig(
                         JwtAuthenticationFilter jwtAuthenticationFilter) {
-
                 this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         }
 
-        // =====================================================
+        // =========================================================
         // PASSWORD ENCODER
-        // =====================================================
+        // =========================================================
 
         @Bean
         public PasswordEncoder passwordEncoder() {
-
                 return new BCryptPasswordEncoder();
         }
 
-        // =====================================================
+        // =========================================================
         // AUTHENTICATION MANAGER
-        // =====================================================
+        // =========================================================
 
         @Bean
         public AuthenticationManager authenticationManager(
-                        AuthenticationConfiguration configuration) throws Exception {
+                        AuthenticationConfiguration configuration)
+                        throws Exception {
 
-                return configuration
-                                .getAuthenticationManager();
+                return configuration.getAuthenticationManager();
         }
 
-        // =====================================================
-        // CORS
-        // =====================================================
+        // =========================================================
+        // CORS CONFIGURATION
+        // =========================================================
 
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
 
                 CorsConfiguration configuration = new CorsConfiguration();
 
-                configuration.setAllowedOrigins(
+                configuration.setAllowedOriginPatterns(
                                 List.of(
-                                                "http://127.0.0.1:5500",
-                                                "http://localhost:5500"));
+                                                "http://localhost:*",
+                                                "http://127.0.0.1:*",
+                                                "https://localhost",
+                                                "http://localhost",
+                                                "capacitor://localhost",
+                                                "ionic://localhost"));
 
                 configuration.setAllowedMethods(
                                 List.of(
@@ -83,11 +79,12 @@ public class SecurityConfig {
                                 List.of(
                                                 "Authorization",
                                                 "Content-Type",
-                                                "Accept"));
+                                                "Accept",
+                                                "Origin",
+                                                "X-Requested-With"));
 
                 configuration.setExposedHeaders(
-                                List.of(
-                                                "Authorization"));
+                                List.of("Authorization"));
 
                 configuration.setAllowCredentials(false);
 
@@ -100,74 +97,76 @@ public class SecurityConfig {
                 return source;
         }
 
-        // =====================================================
+        // =========================================================
         // SECURITY FILTER CHAIN
-        // =====================================================
+        // =========================================================
 
         @Bean
         public SecurityFilterChain securityFilterChain(
-                        HttpSecurity http) throws Exception {
+                        HttpSecurity http)
+                        throws Exception {
 
                 http
 
-                                // =================================================
+                                // -------------------------------------------------
                                 // CSRF
-                                // =================================================
+                                // -------------------------------------------------
 
-                                .csrf(
-                                                csrf -> csrf.disable())
+                                .csrf(csrf -> csrf.disable())
 
-                                // =================================================
+                                // -------------------------------------------------
                                 // CORS
-                                // =================================================
+                                // -------------------------------------------------
 
-                                .cors(
-                                                cors -> cors.configurationSource(
-                                                                corsConfigurationSource()))
+                                .cors(cors -> cors.configurationSource(
+                                                corsConfigurationSource()))
 
-                                // =================================================
-                                // JWT = STATELESS
-                                // =================================================
+                                // -------------------------------------------------
+                                // SESSION
+                                // -------------------------------------------------
 
                                 .sessionManagement(
                                                 session -> session.sessionCreationPolicy(
                                                                 SessionCreationPolicy.STATELESS))
 
-                                // =================================================
+                                // -------------------------------------------------
                                 // AUTHORIZATION
-                                // =================================================
+                                // -------------------------------------------------
 
                                 .authorizeHttpRequests(
                                                 auth -> auth
 
-                                                                // ---------------------------------
-                                                                // OPTIONS / CORS PREFLIGHT
-                                                                // ---------------------------------
-
+                                                                // CORS preflight
                                                                 .requestMatchers(
                                                                                 HttpMethod.OPTIONS,
                                                                                 "/**")
                                                                 .permitAll()
 
-                                                                // ---------------------------------
-                                                                // PUBLIC AUTHENTICATION
-                                                                // ---------------------------------
+                                                                // =================================
+                                                                // AUTH APIs
+                                                                // =================================
 
                                                                 .requestMatchers(
-                                                                                "/api/auth/**",
+                                                                                HttpMethod.POST,
+                                                                                "/api/auth/login",
+                                                                                "/api/auth/register")
+                                                                .permitAll()
+
+                                                                .requestMatchers(
+                                                                                "/api/auth/**")
+                                                                .permitAll()
+
+                                                                // =================================
+                                                                // HEALTH
+                                                                // =================================
+
+                                                                .requestMatchers(
                                                                                 "/api/health")
                                                                 .permitAll()
 
-                                                                // ---------------------------------
-                                                                // PUBLIC SHIPMENT GET
-                                                                // ---------------------------------
-                                                                //
-                                                                // Development / testing:
-                                                                // Browser can open:
-                                                                //
-                                                                // http://localhost:8081/api/shipments
-                                                                //
-                                                                // ---------------------------------
+                                                                // =================================
+                                                                // PUBLIC SHIPMENTS
+                                                                // =================================
 
                                                                 .requestMatchers(
                                                                                 HttpMethod.GET,
@@ -175,25 +174,25 @@ public class SecurityConfig {
                                                                                 "/api/shipments/**")
                                                                 .permitAll()
 
-                                                                // ---------------------------------
-                                                                // ADMIN APIs
-                                                                // ---------------------------------
+                                                                // =================================
+                                                                // ADMIN
+                                                                // =================================
 
                                                                 .requestMatchers(
                                                                                 "/api/admin/**")
                                                                 .hasRole("ADMIN")
 
-                                                                // ---------------------------------
-                                                                // USER APIs
-                                                                // ---------------------------------
+                                                                // =================================
+                                                                // USER
+                                                                // =================================
 
                                                                 .requestMatchers(
                                                                                 "/api/user/**")
                                                                 .hasRole("USER")
 
-                                                                // ---------------------------------
-                                                                // SHIPMENT WRITE OPERATIONS
-                                                                // ---------------------------------
+                                                                // =================================
+                                                                // SHIPMENT WRITE APIs
+                                                                // =================================
 
                                                                 .requestMatchers(
                                                                                 HttpMethod.POST,
@@ -215,16 +214,16 @@ public class SecurityConfig {
                                                                                 "/api/shipments/**")
                                                                 .authenticated()
 
-                                                                // ---------------------------------
+                                                                // =================================
                                                                 // EVERYTHING ELSE
-                                                                // ---------------------------------
+                                                                // =================================
 
                                                                 .anyRequest()
                                                                 .authenticated())
 
-                                // =================================================
+                                // -------------------------------------------------
                                 // JWT FILTER
-                                // =================================================
+                                // -------------------------------------------------
 
                                 .addFilterBefore(
                                                 jwtAuthenticationFilter,

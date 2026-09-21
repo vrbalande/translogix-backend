@@ -1,101 +1,22 @@
-# =========================================================
-# TRANSLOGIX - Spring Boot / Maven
-# =========================================================
-
-# -------------------------
-# Maven / Build
-# -------------------------
+# Maven
 target/
-build/
-out/
 
-# Maven generated files
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-
-# Keep Maven Wrapper JAR
-!.mvn/wrapper/maven-wrapper.jar
-
-
-# -------------------------
-# Java
-# -------------------------
-*.class
-*.log
-
-# JVM crash logs
-hs_err_pid*
-replay_pid*
-
-
-# -------------------------
-# IntelliJ IDEA
-# -------------------------
+# IDE
+.vscode/
 .idea/
 *.iml
-*.ipr
-*.iws
 
+# Logs
+*.log
 
-# -------------------------
-# Eclipse / STS
-# -------------------------
-.classpath
-.project
-.settings/
-.factorypath
-.springBeans
-.sts4-cache/
-
-
-# -------------------------
-# VS Code
-# -------------------------
-.vscode/
-*.code-workspace
-
-
-# -------------------------
 # OS
-# -------------------------
 .DS_Store
 Thumbs.db
-desktop.ini
 
-
-# -------------------------
-# Environment / Secrets
-# -------------------------
+# Environment / secrets
 .env
-.env.local
-.env.*.local
+.env.*
 
-# Local configuration containing passwords / keys
+# Spring
 application-local.properties
-application-local.yml
-application-local.yaml
-
-
-# -------------------------
-# Temporary files
-# -------------------------
-*.tmp
-*.temp
-*.swp
-*~
-
-# -------------------------
-# Node frontend (if frontend exists)
-# -------------------------
-node_modules/
-
-# -------------------------
-# Optional generated files
-# -------------------------
-*.bak
+application-dev.properties
