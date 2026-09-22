@@ -20,215 +20,241 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
 
-        private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-        public SecurityConfig(
-                        JwtAuthenticationFilter jwtAuthenticationFilter) {
-                this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        }
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
-        // =========================================================
-        // PASSWORD ENCODER
-        // =========================================================
+    // =========================================================
+    // PASSWORD ENCODER
+    // =========================================================
 
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder();
-        }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-        // =========================================================
-        // AUTHENTICATION MANAGER
-        // =========================================================
+    // =========================================================
+    // AUTHENTICATION MANAGER
+    // =========================================================
 
-        @Bean
-        public AuthenticationManager authenticationManager(
-                        AuthenticationConfiguration configuration)
-                        throws Exception {
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration)
+            throws Exception {
 
-                return configuration.getAuthenticationManager();
-        }
+        return configuration.getAuthenticationManager();
+    }
 
-        // =========================================================
-        // CORS CONFIGURATION
-        // =========================================================
+    // =========================================================
+    // CORS CONFIGURATION
+    // =========================================================
 
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
 
-                CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration configuration = new CorsConfiguration();
 
-                configuration.setAllowedOriginPatterns(
-                                List.of(
-                                                "http://localhost:*",
-                                                "http://127.0.0.1:*",
-                                                "https://localhost",
-                                                "http://localhost",
-                                                "capacitor://localhost",
-                                                "ionic://localhost"));
+        configuration.setAllowedOriginPatterns(
+                List.of(
+                        "https://translogix-frontend-ten.vercel.app",
+                        "http://localhost:*",
+                        "http://127.0.0.1:*",
+                        "https://localhost",
+                        "http://localhost",
+                        "capacitor://localhost",
+                        "ionic://localhost"
+                )
+        );
 
-                configuration.setAllowedMethods(
-                                List.of(
-                                                "GET",
-                                                "POST",
-                                                "PUT",
-                                                "PATCH",
-                                                "DELETE",
-                                                "OPTIONS"));
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "PATCH",
+                        "DELETE",
+                        "OPTIONS"
+                )
+        );
 
-                configuration.setAllowedHeaders(
-                                List.of(
-                                                "Authorization",
-                                                "Content-Type",
-                                                "Accept",
-                                                "Origin",
-                                                "X-Requested-With"));
+        configuration.setAllowedHeaders(
+                List.of(
+                        "Authorization",
+                        "Content-Type",
+                        "Accept",
+                        "Origin",
+                        "X-Requested-With"
+                )
+        );
 
-                configuration.setExposedHeaders(
-                                List.of("Authorization"));
+        configuration.setExposedHeaders(
+                List.of("Authorization")
+        );
 
-                configuration.setAllowCredentials(false);
+        configuration.setAllowCredentials(false);
 
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
 
-                source.registerCorsConfiguration(
-                                "/**",
-                                configuration);
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
 
-                return source;
-        }
+        return source;
+    }
 
-        // =========================================================
-        // SECURITY FILTER CHAIN
-        // =========================================================
+    // =========================================================
+    // SECURITY FILTER CHAIN
+    // =========================================================
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(
-                        HttpSecurity http)
-                        throws Exception {
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http)
+            throws Exception {
 
-                http
+        http
 
-                                // -------------------------------------------------
-                                // CSRF
-                                // -------------------------------------------------
+                // -------------------------------------------------
+                // CSRF
+                // -------------------------------------------------
 
-                                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable())
 
-                                // -------------------------------------------------
-                                // CORS
-                                // -------------------------------------------------
+                // -------------------------------------------------
+                // CORS
+                // -------------------------------------------------
 
-                                .cors(cors -> cors.configurationSource(
-                                                corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(
+                        corsConfigurationSource()
+                ))
 
-                                // -------------------------------------------------
-                                // SESSION
-                                // -------------------------------------------------
+                // -------------------------------------------------
+                // SESSION
+                // -------------------------------------------------
 
-                                .sessionManagement(
-                                                session -> session.sessionCreationPolicy(
-                                                                SessionCreationPolicy.STATELESS))
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
 
-                                // -------------------------------------------------
-                                // AUTHORIZATION
-                                // -------------------------------------------------
+                // -------------------------------------------------
+                // AUTHORIZATION
+                // -------------------------------------------------
 
-                                .authorizeHttpRequests(
-                                                auth -> auth
+                .authorizeHttpRequests(
+                        auth -> auth
 
-                                                                // CORS preflight
-                                                                .requestMatchers(
-                                                                                HttpMethod.OPTIONS,
-                                                                                "/**")
-                                                                .permitAll()
+                                // CORS preflight
+                                .requestMatchers(
+                                        HttpMethod.OPTIONS,
+                                        "/**"
+                                )
+                                .permitAll()
 
-                                                                // =================================
-                                                                // AUTH APIs
-                                                                // =================================
+                                // =================================
+                                // AUTH APIs
+                                // =================================
 
-                                                                .requestMatchers(
-                                                                                HttpMethod.POST,
-                                                                                "/api/auth/login",
-                                                                                "/api/auth/register")
-                                                                .permitAll()
+                                .requestMatchers(
+                                        HttpMethod.POST,
+                                        "/api/auth/login",
+                                        "/api/auth/register"
+                                )
+                                .permitAll()
 
-                                                                .requestMatchers(
-                                                                                "/api/auth/**")
-                                                                .permitAll()
+                                .requestMatchers(
+                                        "/api/auth/**"
+                                )
+                                .permitAll()
 
-                                                                // =================================
-                                                                // HEALTH
-                                                                // =================================
+                                // =================================
+                                // HEALTH
+                                // =================================
 
-                                                                .requestMatchers(
-                                                                                "/api/health")
-                                                                .permitAll()
+                                .requestMatchers(
+                                        "/api/health"
+                                )
+                                .permitAll()
 
-                                                                // =================================
-                                                                // PUBLIC SHIPMENTS
-                                                                // =================================
+                                // =================================
+                                // PUBLIC SHIPMENTS
+                                // =================================
 
-                                                                .requestMatchers(
-                                                                                HttpMethod.GET,
-                                                                                "/api/shipments",
-                                                                                "/api/shipments/**")
-                                                                .permitAll()
+                                .requestMatchers(
+                                        HttpMethod.GET,
+                                        "/api/shipments",
+                                        "/api/shipments/**"
+                                )
+                                .permitAll()
 
-                                                                // =================================
-                                                                // ADMIN
-                                                                // =================================
+                                // =================================
+                                // ADMIN
+                                // =================================
 
-                                                                .requestMatchers(
-                                                                                "/api/admin/**")
-                                                                .hasRole("ADMIN")
+                                .requestMatchers(
+                                        "/api/admin/**"
+                                )
+                                .hasRole("ADMIN")
 
-                                                                // =================================
-                                                                // USER
-                                                                // =================================
+                                // =================================
+                                // USER
+                                // =================================
 
-                                                                .requestMatchers(
-                                                                                "/api/user/**")
-                                                                .hasRole("USER")
+                                .requestMatchers(
+                                        "/api/user/**"
+                                )
+                                .hasRole("USER")
 
-                                                                // =================================
-                                                                // SHIPMENT WRITE APIs
-                                                                // =================================
+                                // =================================
+                                // SHIPMENT WRITE APIs
+                                // =================================
 
-                                                                .requestMatchers(
-                                                                                HttpMethod.POST,
-                                                                                "/api/shipments/**")
-                                                                .authenticated()
+                                .requestMatchers(
+                                        HttpMethod.POST,
+                                        "/api/shipments/**"
+                                )
+                                .authenticated()
 
-                                                                .requestMatchers(
-                                                                                HttpMethod.PUT,
-                                                                                "/api/shipments/**")
-                                                                .authenticated()
+                                .requestMatchers(
+                                        HttpMethod.PUT,
+                                        "/api/shipments/**"
+                                )
+                                .authenticated()
 
-                                                                .requestMatchers(
-                                                                                HttpMethod.PATCH,
-                                                                                "/api/shipments/**")
-                                                                .authenticated()
+                                .requestMatchers(
+                                        HttpMethod.PATCH,
+                                        "/api/shipments/**"
+                                )
+                                .authenticated()
 
-                                                                .requestMatchers(
-                                                                                HttpMethod.DELETE,
-                                                                                "/api/shipments/**")
-                                                                .authenticated()
+                                .requestMatchers(
+                                        HttpMethod.DELETE,
+                                        "/api/shipments/**"
+                                )
+                                .authenticated()
 
-                                                                // =================================
-                                                                // EVERYTHING ELSE
-                                                                // =================================
+                                // =================================
+                                // EVERYTHING ELSE
+                                // =================================
 
-                                                                .anyRequest()
-                                                                .authenticated())
+                                .anyRequest()
+                                .authenticated()
+                )
 
-                                // -------------------------------------------------
-                                // JWT FILTER
-                                // -------------------------------------------------
+                // -------------------------------------------------
+                // JWT FILTER
+                // -------------------------------------------------
 
-                                .addFilterBefore(
-                                                jwtAuthenticationFilter,
-                                                UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
-                return http.build();
-        }
+        return http.build();
+    }
 }
