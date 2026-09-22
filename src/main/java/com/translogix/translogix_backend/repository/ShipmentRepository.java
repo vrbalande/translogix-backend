@@ -25,6 +25,13 @@ public interface ShipmentRepository
             String username);
 
     // =====================================================
+    // USER ID SHIPMENTS
+    // =====================================================
+
+    List<Shipment> findByUserId(
+            Long userId);
+
+    // =====================================================
     // USER + TRACKING NUMBER
     // =====================================================
 

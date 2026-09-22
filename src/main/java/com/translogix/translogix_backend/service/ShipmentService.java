@@ -8,7 +8,6 @@ import com.translogix.translogix_backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ShipmentService {
@@ -54,8 +53,18 @@ public class ShipmentService {
     public Shipment getShipmentByTrackingNumber(
             String trackingNumber) {
 
+        if (trackingNumber == null ||
+                trackingNumber.isBlank()) {
+
+            throw new RuntimeException(
+                    "Tracking number is required"
+            );
+        }
+
         return shipmentRepository
-                .findByTrackingNumber(trackingNumber)
+                .findByTrackingNumber(
+                        trackingNumber.trim()
+                )
                 .orElseThrow(
                         () -> new RuntimeException(
                                 "Shipment not found: "
@@ -71,15 +80,37 @@ public class ShipmentService {
     public List<Shipment> getShipmentsByUsername(
             String username) {
 
-        if (username == null || username.isBlank()) {
+        if (username == null ||
+                username.isBlank()) {
+
             throw new RuntimeException(
                     "Username is required"
             );
         }
 
+        // ------------------------------------------------------
+        // FIND USER
+        // ------------------------------------------------------
+
+        User user =
+                userRepository
+                        .findByUsername(
+                                username.trim()
+                        )
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "User not found: "
+                                                + username
+                                )
+                        );
+
+        // ------------------------------------------------------
+        // GET SHIPMENTS USING USER ID
+        // ------------------------------------------------------
+
         return shipmentRepository
-                .findByUserUsernameIgnoreCase(
-                        username.trim()
+                .findByUserId(
+                        user.getId()
                 );
     }
 
@@ -203,7 +234,7 @@ public class ShipmentService {
         }
 
         // ------------------------------------------------------
-        // FIND LOGGED-IN USER
+        // FIND USER
         // ------------------------------------------------------
 
         User user =
