@@ -1,3 +1,4 @@
+
 package com.translogix.translogix_backend.controller;
 
 import com.translogix.translogix_backend.entity.Shipment;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/user")
@@ -147,6 +149,82 @@ public class UserController {
     }
 
     // ==========================================
+    // DEBUG SHIPMENT MAPPING
+    // TEMPORARY - REMOVE AFTER TESTING
+    // ==========================================
+
+    @GetMapping("/debug/shipment-mapping")
+    public ResponseEntity<?> debugShipmentMapping(
+            Authentication authentication) {
+
+        String username = authentication.getName();
+
+        List<Shipment> shipments =
+                shipmentRepository.findAll();
+
+        List<Map<String, Object>> result =
+                shipments.stream()
+                        .map(shipment -> {
+
+                            Map<String, Object> data =
+                                    new HashMap<>();
+
+                            data.put(
+                                    "id",
+                                    shipment.getId()
+                            );
+
+                            data.put(
+                                    "trackingNumber",
+                                    shipment.getTrackingNumber()
+                            );
+
+                            data.put(
+                                    "status",
+                                    shipment.getStatus()
+                            );
+
+                            if (shipment.getUser() != null) {
+
+                                data.put(
+                                        "userId",
+                                        shipment.getUser().getId()
+                                );
+
+                                data.put(
+                                        "username",
+                                        shipment.getUser().getUsername()
+                                );
+
+                            } else {
+
+                                data.put(
+                                        "userId",
+                                        null
+                                );
+
+                                data.put(
+                                        "username",
+                                        null
+                                );
+                            }
+
+                            return data;
+                        })
+                        .toList();
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "loggedInUser",
+                        username,
+
+                        "shipments",
+                        result
+                )
+        );
+    }
+
+    // ==========================================
     // USER DASHBOARD SUMMARY
     // ==========================================
 
@@ -216,12 +294,22 @@ public class UserController {
 
         return ResponseEntity.ok(
                 Map.of(
-                        "totalShipments", totalShipments,
-                        "delivered", delivered,
-                        "inTransit", inTransit,
-                        "pending", pending,
-                        "outForDelivery", outForDelivery
+                        "totalShipments",
+                        totalShipments,
+
+                        "delivered",
+                        delivered,
+
+                        "inTransit",
+                        inTransit,
+
+                        "pending",
+                        pending,
+
+                        "outForDelivery",
+                        outForDelivery
                 )
         );
     }
 }
+
