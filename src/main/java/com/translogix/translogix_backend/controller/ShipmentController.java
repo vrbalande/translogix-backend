@@ -1,14 +1,18 @@
+
 package com.translogix.translogix_backend.controller;
 
 import com.translogix.translogix_backend.entity.Shipment;
+import com.translogix.translogix_backend.entity.User;
+import com.translogix.translogix_backend.repository.UserRepository;
 import com.translogix.translogix_backend.service.ShipmentService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/shipments")
@@ -16,11 +20,14 @@ import java.util.List;
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
+    private final UserRepository userRepository;
 
     public ShipmentController(
-            ShipmentService shipmentService) {
+            ShipmentService shipmentService,
+            UserRepository userRepository) {
 
         this.shipmentService = shipmentService;
+        this.userRepository = userRepository;
     }
 
     /*
@@ -48,8 +55,7 @@ public class ShipmentController {
 
         return shipmentService
                 .getShipmentById(id)
-                .map(
-                        ResponseEntity::ok)
+                .map(ResponseEntity::ok)
                 .orElseGet(
                         () -> ResponseEntity
                                 .notFound()
@@ -77,8 +83,7 @@ public class ShipmentController {
                     .build();
         }
 
-        return ResponseEntity.ok(
-                shipment);
+        return ResponseEntity.ok(shipment);
     }
 
     /*
@@ -93,63 +98,76 @@ public class ShipmentController {
 
         return ResponseEntity.ok(
                 shipmentService
-                        .getShipmentsByStatus(
-                                status));
+                        .getShipmentsByStatus(status));
     }
 
     /*
      * =====================================================
-     * CREATE
+     * CREATE SHIPMENT
      * =====================================================
      */
 
     @PostMapping
     public ResponseEntity<?> createShipment(
-            @RequestBody Shipment shipment) {
+            @RequestBody Shipment shipment,
+            Authentication authentication) {
 
         try {
 
-            if (shipment
-                    .getTrackingNumber() == null
-                    ||
-                    shipment
-                            .getTrackingNumber()
-                            .isBlank()) {
+            if (shipment.getTrackingNumber() == null
+                    || shipment.getTrackingNumber().isBlank()) {
 
                 return ResponseEntity
                         .badRequest()
-                        .body(
-                                "Tracking number is required");
+                        .body("Tracking number is required");
             }
 
-            if (shipment
-                    .getStatus() == null
-                    ||
-                    shipment
-                            .getStatus()
-                            .isBlank()) {
+            if (shipment.getStatus() == null
+                    || shipment.getStatus().isBlank()) {
 
-                shipment.setStatus(
-                        "Pending");
+                shipment.setStatus("Pending");
             }
 
-            Shipment created = shipmentService
-                    .createShipment(
-                            shipment);
+            /*
+             * Get currently logged-in username
+             */
+            String username = authentication.getName();
+
+            /*
+             * Find logged-in user
+             */
+            Optional<User> userOptional =
+                    userRepository.findByUsername(username);
+
+            if (userOptional.isEmpty()) {
+
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body("Logged-in user not found");
+            }
+
+            /*
+             * Link shipment to logged-in user
+             */
+            User user = userOptional.get();
+
+            shipment.setUser(user);
+
+            /*
+             * Save shipment
+             */
+            Shipment created =
+                    shipmentService.createShipment(shipment);
 
             return ResponseEntity
-                    .status(
-                            HttpStatus.CREATED)
-                    .body(
-                            created);
+                    .status(HttpStatus.CREATED)
+                    .body(created);
 
         } catch (RuntimeException e) {
 
             return ResponseEntity
-                    .status(
-                            HttpStatus.BAD_REQUEST)
-                    .body(
-                            e.getMessage());
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
         }
     }
 
@@ -167,20 +185,15 @@ public class ShipmentController {
         try {
 
             Shipment updated = shipmentService
-                    .updateShipment(
-                            id,
-                            shipment);
+                    .updateShipment(id, shipment);
 
-            return ResponseEntity.ok(
-                    updated);
+            return ResponseEntity.ok(updated);
 
         } catch (RuntimeException e) {
 
             return ResponseEntity
-                    .status(
-                            HttpStatus.BAD_REQUEST)
-                    .body(
-                            e.getMessage());
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
         }
     }
 
@@ -198,20 +211,15 @@ public class ShipmentController {
         try {
 
             Shipment updated = shipmentService
-                    .updateShipmentStatus(
-                            id,
-                            status);
+                    .updateShipmentStatus(id, status);
 
-            return ResponseEntity.ok(
-                    updated);
+            return ResponseEntity.ok(updated);
 
         } catch (RuntimeException e) {
 
             return ResponseEntity
-                    .status(
-                            HttpStatus.BAD_REQUEST)
-                    .body(
-                            e.getMessage());
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
         }
     }
 
@@ -227,8 +235,7 @@ public class ShipmentController {
 
         try {
 
-            shipmentService
-                    .deleteShipment(id);
+            shipmentService.deleteShipment(id);
 
             return ResponseEntity.ok(
                     "Shipment deleted successfully");
@@ -236,11 +243,9 @@ public class ShipmentController {
         } catch (RuntimeException e) {
 
             return ResponseEntity
-                    .status(
-                            HttpStatus.NOT_FOUND)
-                    .body(
-                            e.getMessage());
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
         }
     }
-
 }
+
