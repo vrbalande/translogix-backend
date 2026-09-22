@@ -15,6 +15,7 @@ public class ShipmentService {
 
     public ShipmentService(
             ShipmentRepository shipmentRepository) {
+
         this.shipmentRepository = shipmentRepository;
     }
 
@@ -53,6 +54,47 @@ public class ShipmentService {
         return shipmentRepository
                 .findByTrackingNumber(
                         trackingNumber.trim())
+                .orElse(null);
+    }
+
+    // =====================================================
+    // GET USER SHIPMENTS
+    // =====================================================
+
+    public List<Shipment> getShipmentsByUsername(
+            String username) {
+
+        if (username == null ||
+                username.isBlank()) {
+
+            return List.of();
+        }
+
+        return shipmentRepository
+                .findByUserUsernameIgnoreCase(
+                        username.trim());
+    }
+
+    // =====================================================
+    // GET USER SHIPMENT BY TRACKING NUMBER
+    // =====================================================
+
+    public Shipment getShipmentByTrackingNumberForUser(
+            String trackingNumber,
+            String username) {
+
+        if (trackingNumber == null ||
+                trackingNumber.isBlank() ||
+                username == null ||
+                username.isBlank()) {
+
+            return null;
+        }
+
+        return shipmentRepository
+                .findByTrackingNumberAndUserUsernameIgnoreCase(
+                        trackingNumber.trim(),
+                        username.trim())
                 .orElse(null);
     }
 
@@ -126,8 +168,6 @@ public class ShipmentService {
                 .getTrackingNumber()
                 .trim();
 
-        // Prevent duplicate tracking number
-
         if (shipmentRepository
                 .existsByTrackingNumber(
                         trackingNumber)) {
@@ -140,19 +180,14 @@ public class ShipmentService {
         shipment.setTrackingNumber(
                 trackingNumber);
 
-        // Default status
-
         if (shipment.getStatus() == null ||
                 shipment.getStatus().isBlank()) {
 
-            shipment.setStatus(
-                    "Pending");
+            shipment.setStatus("Pending");
         }
 
         shipment.setStatus(
                 shipment.getStatus().trim());
-
-        // Normalize text
 
         if (shipment.getSenderName() != null) {
 
@@ -209,8 +244,6 @@ public class ShipmentService {
                                 "Shipment not found: "
                                         + id));
 
-        // Tracking number
-
         if (request.getTrackingNumber() != null &&
                 !request.getTrackingNumber().isBlank()) {
 
@@ -218,15 +251,16 @@ public class ShipmentService {
                     .getTrackingNumber()
                     .trim();
 
-            boolean trackingChanged = !newTracking.equalsIgnoreCase(
-                    existing
-                            .getTrackingNumber());
+            boolean trackingChanged =
+                    !newTracking.equalsIgnoreCase(
+                            existing.getTrackingNumber());
 
             if (trackingChanged) {
 
-                boolean alreadyExists = shipmentRepository
-                        .existsByTrackingNumber(
-                                newTracking);
+                boolean alreadyExists =
+                        shipmentRepository
+                                .existsByTrackingNumber(
+                                        newTracking);
 
                 if (alreadyExists) {
 
@@ -240,72 +274,46 @@ public class ShipmentService {
             }
         }
 
-        // Sender
-
         if (request.getSenderName() != null &&
                 !request.getSenderName().isBlank()) {
 
             existing.setSenderName(
-                    request
-                            .getSenderName()
-                            .trim());
+                    request.getSenderName().trim());
         }
-
-        // Receiver
 
         if (request.getReceiverName() != null &&
                 !request.getReceiverName().isBlank()) {
 
             existing.setReceiverName(
-                    request
-                            .getReceiverName()
-                            .trim());
+                    request.getReceiverName().trim());
         }
-
-        // Origin
 
         if (request.getOrigin() != null &&
                 !request.getOrigin().isBlank()) {
 
             existing.setOrigin(
-                    request
-                            .getOrigin()
-                            .trim());
+                    request.getOrigin().trim());
         }
-
-        // Destination
 
         if (request.getDestination() != null &&
                 !request.getDestination().isBlank()) {
 
             existing.setDestination(
-                    request
-                            .getDestination()
-                            .trim());
+                    request.getDestination().trim());
         }
-
-        // Shipment Type
 
         if (request.getShipmentType() != null) {
 
             existing.setShipmentType(
-                    request
-                            .getShipmentType()
-                            .trim());
+                    request.getShipmentType().trim());
         }
-
-        // Status
 
         if (request.getStatus() != null &&
                 !request.getStatus().isBlank()) {
 
             existing.setStatus(
-                    request
-                            .getStatus()
-                            .trim());
+                    request.getStatus().trim());
         }
-
-        // Weight
 
         if (request.getWeight() != null) {
 
@@ -324,7 +332,7 @@ public class ShipmentService {
     }
 
     // =====================================================
-    // UPDATE SHIPMENT STATUS
+    // UPDATE STATUS
     // =====================================================
 
     public Shipment updateShipmentStatus(
@@ -345,24 +353,22 @@ public class ShipmentService {
                                 "Shipment not found: "
                                         + id));
 
-        String newStatus = status.trim();
-
         shipment.setStatus(
-                newStatus);
+                status.trim());
 
         return shipmentRepository.save(
                 shipment);
     }
 
     // =====================================================
-    // DELETE SHIPMENT
+    // DELETE
     // =====================================================
 
     public void deleteShipment(
             Long id) {
 
-        boolean exists = shipmentRepository
-                .existsById(id);
+        boolean exists =
+                shipmentRepository.existsById(id);
 
         if (!exists) {
 
@@ -371,8 +377,6 @@ public class ShipmentService {
                             + id);
         }
 
-        shipmentRepository.deleteById(
-                id);
+        shipmentRepository.deleteById(id);
     }
-
 }

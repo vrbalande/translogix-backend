@@ -10,11 +10,39 @@ import java.util.Optional;
 public interface ShipmentRepository
         extends JpaRepository<Shipment, Long> {
 
+    // =====================================================
+    // TRACKING NUMBER
+    // =====================================================
+
     Optional<Shipment> findByTrackingNumber(
             String trackingNumber);
 
+    // =====================================================
+    // USER SHIPMENTS
+    // =====================================================
+
+    List<Shipment> findByUserUsernameIgnoreCase(
+            String username);
+
+    // =====================================================
+    // USER + TRACKING NUMBER
+    // =====================================================
+
+    Optional<Shipment>
+    findByTrackingNumberAndUserUsernameIgnoreCase(
+            String trackingNumber,
+            String username);
+
+    // =====================================================
+    // STATUS
+    // =====================================================
+
     List<Shipment> findByStatusIgnoreCase(
             String status);
+
+    // =====================================================
+    // DUPLICATE TRACKING NUMBER
+    // =====================================================
 
     boolean existsByTrackingNumber(
             String trackingNumber);
