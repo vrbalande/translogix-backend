@@ -1,4 +1,3 @@
-
 package com.translogix.translogix_backend.service;
 
 import com.translogix.translogix_backend.entity.Shipment;
@@ -25,72 +24,105 @@ public class ShipmentService {
         this.userRepository = userRepository;
     }
 
+    // ==========================================================
+    // GET ALL SHIPMENTS
+    // ==========================================================
+
     public List<Shipment> getAllShipments() {
         return shipmentRepository.findAll();
     }
 
-    public Optional<Shipment> getShipmentById(Long id) {
-        return shipmentRepository.findById(id);
+    // ==========================================================
+    // GET SHIPMENT BY ID
+    // ==========================================================
+
+    public Shipment getShipmentById(Long id) {
+
+        return shipmentRepository
+                .findById(id)
+                .orElseThrow(
+                        () -> new RuntimeException(
+                                "Shipment not found with id: " + id
+                        )
+                );
     }
+
+    // ==========================================================
+    // GET SHIPMENT BY TRACKING NUMBER
+    // ==========================================================
 
     public Shipment getShipmentByTrackingNumber(
             String trackingNumber) {
 
-        if (trackingNumber == null ||
-                trackingNumber.isBlank()) {
-            return null;
-        }
-
         return shipmentRepository
-                .findByTrackingNumber(trackingNumber.trim())
-                .orElse(null);
+                .findByTrackingNumber(trackingNumber)
+                .orElseThrow(
+                        () -> new RuntimeException(
+                                "Shipment not found: "
+                                        + trackingNumber
+                        )
+                );
     }
+
+    // ==========================================================
+    // GET SHIPMENTS BY LOGGED-IN USER
+    // ==========================================================
 
     public List<Shipment> getShipmentsByUsername(
             String username) {
 
         if (username == null || username.isBlank()) {
-            return List.of();
+            throw new RuntimeException(
+                    "Username is required"
+            );
         }
 
         return shipmentRepository
-                .findByUserUsernameIgnoreCase(username.trim());
+                .findByUserUsernameIgnoreCase(
+                        username.trim()
+                );
     }
+
+    // ==========================================================
+    // GET SHIPMENT BY TRACKING NUMBER FOR LOGGED-IN USER
+    // ==========================================================
 
     public Shipment getShipmentByTrackingNumberForUser(
             String trackingNumber,
             String username) {
 
         if (trackingNumber == null ||
-                trackingNumber.isBlank() ||
-                username == null ||
+                trackingNumber.isBlank()) {
+
+            throw new RuntimeException(
+                    "Tracking number is required"
+            );
+        }
+
+        if (username == null ||
                 username.isBlank()) {
-            return null;
+
+            throw new RuntimeException(
+                    "Username is required"
+            );
         }
 
         return shipmentRepository
                 .findByTrackingNumberAndUserUsernameIgnoreCase(
                         trackingNumber.trim(),
-                        username.trim())
-                .orElse(null);
+                        username.trim()
+                )
+                .orElseThrow(
+                        () -> new RuntimeException(
+                                "Shipment not found for user: "
+                                        + trackingNumber
+                        )
+                );
     }
 
-    public List<Shipment> getShipmentsByStatus(
-            String status) {
-
-        if (status == null || status.isBlank()) {
-            return shipmentRepository.findAll();
-        }
-
-        return shipmentRepository
-                .findByStatusIgnoreCase(status.trim());
-    }
-
-    /*
-     * =====================================================
-     * CREATE SHIPMENT
-     * =====================================================
-     */
+    // ==========================================================
+    // CREATE SHIPMENT
+    // ==========================================================
 
     public Shipment createShipment(
             Shipment shipment,
@@ -98,48 +130,65 @@ public class ShipmentService {
 
         if (shipment == null) {
             throw new RuntimeException(
-                    "Shipment data is required");
+                    "Shipment data is required"
+            );
         }
 
-        if (username == null || username.isBlank()) {
+        if (username == null ||
+                username.isBlank()) {
+
             throw new RuntimeException(
-                    "Authenticated username is required");
+                    "Username is required"
+            );
         }
+
+        // ------------------------------------------------------
+        // REQUIRED FIELD VALIDATION
+        // ------------------------------------------------------
 
         if (shipment.getTrackingNumber() == null ||
                 shipment.getTrackingNumber().isBlank()) {
 
             throw new RuntimeException(
-                    "Tracking number is required");
+                    "Tracking number is required"
+            );
         }
 
         if (shipment.getSenderName() == null ||
                 shipment.getSenderName().isBlank()) {
 
             throw new RuntimeException(
-                    "Sender name is required");
+                    "Sender name is required"
+            );
         }
 
         if (shipment.getReceiverName() == null ||
                 shipment.getReceiverName().isBlank()) {
 
             throw new RuntimeException(
-                    "Receiver name is required");
+                    "Receiver name is required"
+            );
         }
 
         if (shipment.getOrigin() == null ||
                 shipment.getOrigin().isBlank()) {
 
             throw new RuntimeException(
-                    "Origin is required");
+                    "Origin is required"
+            );
         }
 
         if (shipment.getDestination() == null ||
                 shipment.getDestination().isBlank()) {
 
             throw new RuntimeException(
-                    "Destination is required");
+                    "Destination is required"
+            );
         }
+
+        // ------------------------------------------------------
+        // DUPLICATE TRACKING NUMBER CHECK
+        // ------------------------------------------------------
 
         String trackingNumber =
                 shipment.getTrackingNumber().trim();
@@ -149,192 +198,316 @@ public class ShipmentService {
 
             throw new RuntimeException(
                     "Tracking number already exists: "
-                            + trackingNumber);
+                            + trackingNumber
+            );
         }
 
-        /*
-         * =================================================
-         * FIND LOGGED-IN USER
-         * =================================================
-         */
+        // ------------------------------------------------------
+        // FIND LOGGED-IN USER
+        // ------------------------------------------------------
 
-        User user = userRepository
-                .findByUsername(username.trim())
-                .orElseThrow(
-                        () -> new RuntimeException(
-                                "User not found: "
-                                        + username));
+        User user =
+                userRepository
+                        .findByUsername(
+                                username.trim()
+                        )
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "User not found: "
+                                                + username
+                                )
+                        );
 
-        /*
-         * =================================================
-         * IMPORTANT: LINK SHIPMENT TO USER
-         * =================================================
-         */
+        // ------------------------------------------------------
+        // LINK SHIPMENT TO USER
+        // ------------------------------------------------------
 
         shipment.setUser(user);
 
+        // ------------------------------------------------------
+        // NORMALIZE DATA
+        // ------------------------------------------------------
+
         shipment.setTrackingNumber(
-                trackingNumber);
+                trackingNumber
+        );
+
+        shipment.setSenderName(
+                shipment.getSenderName().trim()
+        );
+
+        shipment.setReceiverName(
+                shipment.getReceiverName().trim()
+        );
+
+        shipment.setOrigin(
+                shipment.getOrigin().trim()
+        );
+
+        shipment.setDestination(
+                shipment.getDestination().trim()
+        );
+
+        if (shipment.getShipmentType() != null) {
+
+            shipment.setShipmentType(
+                    shipment.getShipmentType().trim()
+            );
+        }
+
+        // ------------------------------------------------------
+        // DEFAULT STATUS
+        // ------------------------------------------------------
 
         if (shipment.getStatus() == null ||
                 shipment.getStatus().isBlank()) {
 
             shipment.setStatus("Pending");
+
+        } else {
+
+            shipment.setStatus(
+                    shipment.getStatus().trim()
+            );
         }
 
-        shipment.setStatus(
-                shipment.getStatus().trim());
-
-        shipment.setSenderName(
-                shipment.getSenderName().trim());
-
-        shipment.setReceiverName(
-                shipment.getReceiverName().trim());
-
-        shipment.setOrigin(
-                shipment.getOrigin().trim());
-
-        shipment.setDestination(
-                shipment.getDestination().trim());
-
-        if (shipment.getShipmentType() != null) {
-            shipment.setShipmentType(
-                    shipment.getShipmentType().trim());
-        }
+        // ------------------------------------------------------
+        // WEIGHT VALIDATION
+        // ------------------------------------------------------
 
         if (shipment.getWeight() != null &&
                 shipment.getWeight() < 0) {
 
             throw new RuntimeException(
-                    "Weight cannot be negative");
+                    "Weight cannot be negative"
+            );
         }
 
-        /*
-         * saveAndFlush forces the INSERT immediately.
-         */
+        // ------------------------------------------------------
+        // SAVE SHIPMENT
+        // ------------------------------------------------------
+
         return shipmentRepository.saveAndFlush(
-                shipment);
+                shipment
+        );
     }
+
+    // ==========================================================
+    // ASSIGN EXISTING SHIPMENT TO USER
+    // ==========================================================
+
+    public Shipment assignShipmentToUser(
+            String trackingNumber,
+            String username) {
+
+        if (trackingNumber == null ||
+                trackingNumber.isBlank()) {
+
+            throw new RuntimeException(
+                    "Tracking number is required"
+            );
+        }
+
+        if (username == null ||
+                username.isBlank()) {
+
+            throw new RuntimeException(
+                    "Username is required"
+            );
+        }
+
+        // ------------------------------------------------------
+        // FIND EXISTING SHIPMENT
+        // ------------------------------------------------------
+
+        Shipment shipment =
+                shipmentRepository
+                        .findByTrackingNumber(
+                                trackingNumber.trim()
+                        )
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Shipment not found: "
+                                                + trackingNumber
+                                )
+                        );
+
+        // ------------------------------------------------------
+        // FIND USER
+        // ------------------------------------------------------
+
+        User user =
+                userRepository
+                        .findByUsername(
+                                username.trim()
+                        )
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "User not found: "
+                                                + username
+                                )
+                        );
+
+        // ------------------------------------------------------
+        // LINK SHIPMENT TO USER
+        // ------------------------------------------------------
+
+        shipment.setUser(user);
+
+        // ------------------------------------------------------
+        // SAVE CHANGES
+        // ------------------------------------------------------
+
+        return shipmentRepository.saveAndFlush(
+                shipment
+        );
+    }
+
+    // ==========================================================
+    // UPDATE SHIPMENT
+    // ==========================================================
 
     public Shipment updateShipment(
             Long id,
-            Shipment request) {
+            Shipment updatedShipment) {
 
-        if (request == null) {
-            throw new RuntimeException(
-                    "Shipment update data is required");
+        Shipment existingShipment =
+                shipmentRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Shipment not found with id: "
+                                                + id
+                                )
+                        );
+
+        if (updatedShipment.getTrackingNumber() != null) {
+            existingShipment.setTrackingNumber(
+                    updatedShipment.getTrackingNumber()
+            );
         }
 
-        Shipment existing = shipmentRepository
-                .findById(id)
-                .orElseThrow(
-                        () -> new RuntimeException(
-                                "Shipment not found: " + id));
-
-        if (request.getTrackingNumber() != null &&
-                !request.getTrackingNumber().isBlank()) {
-
-            String newTracking =
-                    request.getTrackingNumber().trim();
-
-            boolean trackingChanged =
-                    !newTracking.equalsIgnoreCase(
-                            existing.getTrackingNumber());
-
-            if (trackingChanged &&
-                    shipmentRepository
-                            .existsByTrackingNumber(
-                                    newTracking)) {
-
-                throw new RuntimeException(
-                        "Tracking number already exists: "
-                                + newTracking);
-            }
-
-            if (trackingChanged) {
-                existing.setTrackingNumber(
-                        newTracking);
-            }
+        if (updatedShipment.getSenderName() != null) {
+            existingShipment.setSenderName(
+                    updatedShipment.getSenderName()
+            );
         }
 
-        if (request.getSenderName() != null &&
-                !request.getSenderName().isBlank()) {
-            existing.setSenderName(
-                    request.getSenderName().trim());
+        if (updatedShipment.getReceiverName() != null) {
+            existingShipment.setReceiverName(
+                    updatedShipment.getReceiverName()
+            );
         }
 
-        if (request.getReceiverName() != null &&
-                !request.getReceiverName().isBlank()) {
-            existing.setReceiverName(
-                    request.getReceiverName().trim());
+        if (updatedShipment.getOrigin() != null) {
+            existingShipment.setOrigin(
+                    updatedShipment.getOrigin()
+            );
         }
 
-        if (request.getOrigin() != null &&
-                !request.getOrigin().isBlank()) {
-            existing.setOrigin(
-                    request.getOrigin().trim());
+        if (updatedShipment.getDestination() != null) {
+            existingShipment.setDestination(
+                    updatedShipment.getDestination()
+            );
         }
 
-        if (request.getDestination() != null &&
-                !request.getDestination().isBlank()) {
-            existing.setDestination(
-                    request.getDestination().trim());
+        if (updatedShipment.getShipmentType() != null) {
+            existingShipment.setShipmentType(
+                    updatedShipment.getShipmentType()
+            );
         }
 
-        if (request.getShipmentType() != null) {
-            existing.setShipmentType(
-                    request.getShipmentType().trim());
+        if (updatedShipment.getStatus() != null) {
+            existingShipment.setStatus(
+                    updatedShipment.getStatus()
+            );
         }
 
-        if (request.getStatus() != null &&
-                !request.getStatus().isBlank()) {
-            existing.setStatus(
-                    request.getStatus().trim());
+        if (updatedShipment.getWeight() != null) {
+            existingShipment.setWeight(
+                    updatedShipment.getWeight()
+            );
         }
 
-        if (request.getWeight() != null) {
-
-            if (request.getWeight() < 0) {
-                throw new RuntimeException(
-                        "Weight cannot be negative");
-            }
-
-            existing.setWeight(
-                    request.getWeight());
-        }
-
-        return shipmentRepository.save(
-                existing);
+        return shipmentRepository.saveAndFlush(
+                existingShipment
+        );
     }
+
+    // ==========================================================
+    // UPDATE SHIPMENT STATUS
+    // ==========================================================
 
     public Shipment updateShipmentStatus(
             Long id,
             String status) {
 
-        if (status == null || status.isBlank()) {
+        Shipment shipment =
+                shipmentRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Shipment not found with id: "
+                                                + id
+                                )
+                        );
+
+        if (status == null ||
+                status.isBlank()) {
+
             throw new RuntimeException(
-                    "Status is required");
+                    "Status is required"
+            );
         }
 
-        Shipment shipment = shipmentRepository
-                .findById(id)
-                .orElseThrow(
-                        () -> new RuntimeException(
-                                "Shipment not found: " + id));
+        shipment.setStatus(
+                status.trim()
+        );
 
-        shipment.setStatus(status.trim());
-
-        return shipmentRepository.save(shipment);
+        return shipmentRepository.saveAndFlush(
+                shipment
+        );
     }
+
+    // ==========================================================
+    // DELETE SHIPMENT
+    // ==========================================================
 
     public void deleteShipment(Long id) {
 
-        if (!shipmentRepository.existsById(id)) {
+        Shipment shipment =
+                shipmentRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Shipment not found with id: "
+                                                + id
+                                )
+                        );
+
+        shipmentRepository.delete(
+                shipment
+        );
+    }
+
+    // ==========================================================
+    // GET SHIPMENTS BY STATUS
+    // ==========================================================
+
+    public List<Shipment> getShipmentsByStatus(
+            String status) {
+
+        if (status == null ||
+                status.isBlank()) {
+
             throw new RuntimeException(
-                    "Shipment not found: " + id);
+                    "Status is required"
+            );
         }
 
-        shipmentRepository.deleteById(id);
+        return shipmentRepository
+                .findByStatusIgnoreCase(
+                        status.trim()
+                );
     }
 }
-

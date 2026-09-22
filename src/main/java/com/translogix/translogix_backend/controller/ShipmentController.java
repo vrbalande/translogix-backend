@@ -6,14 +6,16 @@ import com.translogix.translogix_backend.service.ShipmentService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.security.core.Authentication;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/shipments")
-@CrossOrigin(origins = "*")
+@CrossOrigin
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
@@ -24,83 +26,70 @@ public class ShipmentController {
         this.shipmentService = shipmentService;
     }
 
-    /*
-     * =====================================================
-     * GET ALL SHIPMENTS
-     * =====================================================
-     */
+    // ==========================================================
+    // GET ALL SHIPMENTS
+    // ==========================================================
 
     @GetMapping
     public ResponseEntity<List<Shipment>> getAllShipments() {
 
         return ResponseEntity.ok(
-                shipmentService.getAllShipments());
+                shipmentService.getAllShipments()
+        );
     }
 
-    /*
-     * =====================================================
-     * GET SHIPMENT BY ID
-     * =====================================================
-     */
+    // ==========================================================
+    // GET SHIPMENT BY ID
+    // ==========================================================
 
     @GetMapping("/{id}")
-    public ResponseEntity<Shipment> getShipmentById(
+    public ResponseEntity<?> getShipmentById(
             @PathVariable Long id) {
 
-        return shipmentService
-                .getShipmentById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(
-                        () -> ResponseEntity
-                                .notFound()
-                                .build());
-    }
+        try {
 
-    /*
-     * =====================================================
-     * TRACKING
-     * =====================================================
-     */
+            Shipment shipment =
+                    shipmentService.getShipmentById(id);
 
-    @GetMapping("/tracking/{trackingNumber}")
-    public ResponseEntity<Shipment> getShipmentByTrackingNumber(
-            @PathVariable String trackingNumber) {
+            return ResponseEntity.ok(shipment);
 
-        Shipment shipment =
-                shipmentService
-                        .getShipmentByTrackingNumber(
-                                trackingNumber);
-
-        if (shipment == null) {
+        } catch (RuntimeException e) {
 
             return ResponseEntity
-                    .notFound()
-                    .build();
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
         }
-
-        return ResponseEntity.ok(shipment);
     }
 
-    /*
-     * =====================================================
-     * GET BY STATUS
-     * =====================================================
-     */
+    // ==========================================================
+    // GET SHIPMENT BY TRACKING NUMBER
+    // ==========================================================
 
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<Shipment>> getShipmentsByStatus(
-            @PathVariable String status) {
+    @GetMapping("/track/{trackingNumber}")
+    public ResponseEntity<?> getShipmentByTrackingNumber(
+            @PathVariable String trackingNumber) {
 
-        return ResponseEntity.ok(
-                shipmentService
-                        .getShipmentsByStatus(status));
+        try {
+
+            Shipment shipment =
+                    shipmentService
+                            .getShipmentByTrackingNumber(
+                                    trackingNumber
+                            );
+
+            return ResponseEntity.ok(shipment);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        }
     }
 
-    /*
-     * =====================================================
-     * CREATE SHIPMENT
-     * =====================================================
-     */
+    // ==========================================================
+    // CREATE SHIPMENT
+    // ==========================================================
 
     @PostMapping
     public ResponseEntity<?> createShipment(
@@ -109,25 +98,14 @@ public class ShipmentController {
 
         try {
 
-            /*
-             * Get logged-in username from JWT
-             */
             String username =
                     authentication.getName();
-
-            /*
-             * Service will:
-             *
-             * 1. Validate shipment
-             * 2. Find logged-in user
-             * 3. Set shipment.user
-             * 4. Save shipment
-             */
 
             Shipment created =
                     shipmentService.createShipment(
                             shipment,
-                            username);
+                            username
+                    );
 
             return ResponseEntity
                     .status(HttpStatus.CREATED)
@@ -141,11 +119,40 @@ public class ShipmentController {
         }
     }
 
-    /*
-     * =====================================================
-     * UPDATE
-     * =====================================================
-     */
+    // ==========================================================
+    // ASSIGN EXISTING SHIPMENT TO USER
+    //
+    // Example:
+    // PATCH /api/shipments/assign-user
+    // ?trackingNumber=TRX10001&username=vijay
+    // ==========================================================
+
+    @PatchMapping("/assign-user")
+    public ResponseEntity<?> assignShipmentToUser(
+            @RequestParam String trackingNumber,
+            @RequestParam String username) {
+
+        try {
+
+            Shipment updated =
+                    shipmentService.assignShipmentToUser(
+                            trackingNumber,
+                            username
+                    );
+
+            return ResponseEntity.ok(updated);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+    }
+
+    // ==========================================================
+    // UPDATE SHIPMENT
+    // ==========================================================
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateShipment(
@@ -157,7 +164,8 @@ public class ShipmentController {
             Shipment updated =
                     shipmentService.updateShipment(
                             id,
-                            shipment);
+                            shipment
+                    );
 
             return ResponseEntity.ok(updated);
 
@@ -169,11 +177,9 @@ public class ShipmentController {
         }
     }
 
-    /*
-     * =====================================================
-     * STATUS UPDATE
-     * =====================================================
-     */
+    // ==========================================================
+    // UPDATE SHIPMENT STATUS
+    // ==========================================================
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateShipmentStatus(
@@ -185,7 +191,8 @@ public class ShipmentController {
             Shipment updated =
                     shipmentService.updateShipmentStatus(
                             id,
-                            status);
+                            status
+                    );
 
             return ResponseEntity.ok(updated);
 
@@ -197,11 +204,9 @@ public class ShipmentController {
         }
     }
 
-    /*
-     * =====================================================
-     * DELETE
-     * =====================================================
-     */
+    // ==========================================================
+    // DELETE SHIPMENT
+    // ==========================================================
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteShipment(
@@ -211,13 +216,37 @@ public class ShipmentController {
 
             shipmentService.deleteShipment(id);
 
-            return ResponseEntity.ok(
-                    "Shipment deleted successfully");
+            return ResponseEntity
+                    .ok("Shipment deleted successfully");
 
         } catch (RuntimeException e) {
 
             return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+    }
+
+    // ==========================================================
+    // GET SHIPMENTS BY STATUS
+    // ==========================================================
+
+    @GetMapping("/status/{status}")
+    public ResponseEntity<?> getShipmentsByStatus(
+            @PathVariable String status) {
+
+        try {
+
+            List<Shipment> shipments =
+                    shipmentService
+                            .getShipmentsByStatus(status);
+
+            return ResponseEntity.ok(shipments);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
                     .body(e.getMessage());
         }
     }
