@@ -1,4 +1,7 @@
+
 package com.translogix.translogix_backend.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 
@@ -51,6 +54,7 @@ public class Shipment {
     // USER RELATIONSHIP
     // =====================================================
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -142,3 +146,4 @@ public class Shipment {
         this.user = user;
     }
 }
+

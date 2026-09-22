@@ -1,4 +1,3 @@
-
 package com.translogix.translogix_backend.controller;
 
 import com.translogix.translogix_backend.entity.Shipment;
@@ -36,7 +35,8 @@ public class UserController {
     public ResponseEntity<?> trackShipment(
             @PathVariable String trackingNumber) {
 
-        Optional<Shipment> shipment = shipmentRepository.findByTrackingNumber(trackingNumber);
+        Optional<Shipment> shipment =
+                shipmentRepository.findByTrackingNumber(trackingNumber);
 
         if (shipment.isEmpty()) {
 
@@ -49,14 +49,18 @@ public class UserController {
     }
 
     // ==========================================
-    // GET SHIPMENT BY ID
+    // GET USER SHIPMENT BY ID
     // ==========================================
 
     @GetMapping("/shipments/{id}")
     public ResponseEntity<?> getShipmentById(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            Authentication authentication) {
 
-        Optional<Shipment> shipment = shipmentRepository.findById(id);
+        String username = authentication.getName();
+
+        Optional<Shipment> shipment =
+                shipmentRepository.findById(id);
 
         if (shipment.isEmpty()) {
 
@@ -65,30 +69,60 @@ public class UserController {
                     .body("Shipment not found.");
         }
 
-        return ResponseEntity.ok(shipment.get());
+        Shipment foundShipment = shipment.get();
+
+        // Make sure shipment belongs to logged-in user
+        if (foundShipment.getUser() == null ||
+                foundShipment.getUser().getUsername() == null ||
+                !foundShipment.getUser()
+                        .getUsername()
+                        .equalsIgnoreCase(username)) {
+
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("You are not allowed to access this shipment.");
+        }
+
+        return ResponseEntity.ok(foundShipment);
     }
 
     // ==========================================
-    // VIEW ALL SHIPMENTS
+    // VIEW LOGGED-IN USER SHIPMENTS
     // ==========================================
 
     @GetMapping("/shipments")
-    public ResponseEntity<List<Shipment>> getAllShipments() {
+    public ResponseEntity<List<Shipment>> getMyShipments(
+            Authentication authentication) {
 
-        List<Shipment> shipments = shipmentRepository.findAll();
+        String username = authentication.getName();
+
+        List<Shipment> shipments =
+                shipmentRepository
+                        .findByUserUsernameIgnoreCase(username);
 
         return ResponseEntity.ok(shipments);
     }
 
     // ==========================================
-    // SEARCH SHIPMENTS BY STATUS
+    // SEARCH USER SHIPMENTS BY STATUS
     // ==========================================
 
     @GetMapping("/shipments/status/{status}")
     public ResponseEntity<List<Shipment>> getShipmentsByStatus(
-            @PathVariable String status) {
+            @PathVariable String status,
+            Authentication authentication) {
 
-        List<Shipment> shipments = shipmentRepository.findByStatusIgnoreCase(status);
+        String username = authentication.getName();
+
+        List<Shipment> shipments =
+                shipmentRepository
+                        .findByUserUsernameIgnoreCase(username)
+                        .stream()
+                        .filter(shipment ->
+                                shipment.getStatus() != null &&
+                                shipment.getStatus()
+                                        .equalsIgnoreCase(status))
+                        .toList();
 
         return ResponseEntity.ok(shipments);
     }
@@ -106,7 +140,10 @@ public class UserController {
         return ResponseEntity.ok(
                 Map.of(
                         "username", username,
-                        "message", "User profile retrieved successfully"));
+                        "message",
+                        "User profile retrieved successfully"
+                )
+        );
     }
 
     // ==========================================
@@ -114,40 +151,68 @@ public class UserController {
     // ==========================================
 
     @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboard() {
+    public ResponseEntity<?> getDashboard(
+            Authentication authentication) {
 
-        List<Shipment> shipments = shipmentRepository.findAll();
+        String username = authentication.getName();
 
-        // Total shipments
+        List<Shipment> shipments =
+                shipmentRepository
+                        .findByUserUsernameIgnoreCase(username);
+
+        // ==========================================
+        // TOTAL SHIPMENTS
+        // ==========================================
+
         long totalShipments = shipments.size();
 
-        // Delivered shipments
+        // ==========================================
+        // DELIVERED
+        // ==========================================
+
         long delivered = shipments.stream()
-                .filter(shipment -> shipment.getStatus() != null &&
+                .filter(shipment ->
+                        shipment.getStatus() != null &&
                         shipment.getStatus()
                                 .equalsIgnoreCase("Delivered"))
                 .count();
 
-        // In Transit shipments
+        // ==========================================
+        // IN TRANSIT
+        // ==========================================
+
         long inTransit = shipments.stream()
-                .filter(shipment -> shipment.getStatus() != null &&
+                .filter(shipment ->
+                        shipment.getStatus() != null &&
                         shipment.getStatus()
                                 .equalsIgnoreCase("In Transit"))
                 .count();
 
-        // Pending shipments
+        // ==========================================
+        // PENDING
+        // ==========================================
+
         long pending = shipments.stream()
-                .filter(shipment -> shipment.getStatus() != null &&
+                .filter(shipment ->
+                        shipment.getStatus() != null &&
                         shipment.getStatus()
                                 .equalsIgnoreCase("Pending"))
                 .count();
 
-        // Out for Delivery shipments
+        // ==========================================
+        // OUT FOR DELIVERY
+        // ==========================================
+
         long outForDelivery = shipments.stream()
-                .filter(shipment -> shipment.getStatus() != null &&
+                .filter(shipment ->
+                        shipment.getStatus() != null &&
                         shipment.getStatus()
                                 .equalsIgnoreCase("Out for Delivery"))
                 .count();
+
+        // ==========================================
+        // RESPONSE
+        // ==========================================
 
         return ResponseEntity.ok(
                 Map.of(
@@ -155,6 +220,8 @@ public class UserController {
                         "delivered", delivered,
                         "inTransit", inTransit,
                         "pending", pending,
-                        "outForDelivery", outForDelivery));
+                        "outForDelivery", outForDelivery
+                )
+        );
     }
 }
