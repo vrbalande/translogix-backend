@@ -1,5 +1,6 @@
 package com.translogix.translogix_backend.controller;
 
+import com.translogix.translogix_backend.dto.AdminCreateShipmentRequest;
 import com.translogix.translogix_backend.entity.Shipment;
 import com.translogix.translogix_backend.service.AdminService;
 
@@ -58,16 +59,20 @@ public class AdminController {
     // ==========================================================
     // CREATE SHIPMENT
     // ==========================================================
+    // IMPORTANT:
+    // Uses AdminCreateShipmentRequest so username can be received
+    // and shipment can be assigned to selected customer.
+    // ==========================================================
 
     @PostMapping("/shipments")
     public ResponseEntity<?> createShipment(
-            @RequestBody Shipment shipment) {
+            @RequestBody AdminCreateShipmentRequest request) {
 
         try {
 
             Shipment savedShipment =
                     adminService.createShipment(
-                            shipment
+                            request
                     );
 
             return ResponseEntity
