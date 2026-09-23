@@ -2,6 +2,8 @@ package com.translogix.translogix_backend.controller;
 
 import com.translogix.translogix_backend.dto.AdminCreateShipmentRequest;
 import com.translogix.translogix_backend.entity.Shipment;
+import com.translogix.translogix_backend.entity.User;
+import com.translogix.translogix_backend.repository.UserRepository;
 import com.translogix.translogix_backend.service.AdminService;
 
 import org.springframework.http.HttpStatus;
@@ -16,14 +18,31 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+    private final UserRepository userRepository;
 
-    public AdminController(AdminService adminService) {
+    public AdminController(
+            AdminService adminService,
+            UserRepository userRepository
+    ) {
         this.adminService = adminService;
+        this.userRepository = userRepository;
     }
 
-    // ==========================================================
+    // =========================================================
+    // GET ALL USERS / CUSTOMERS
+    // =========================================================
+
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> getCustomers() {
+
+        return ResponseEntity.ok(
+                userRepository.findByRoleIgnoreCase("USER")
+        );
+    }
+
+    // =========================================================
     // GET ALL SHIPMENTS
-    // ==========================================================
+    // =========================================================
 
     @GetMapping("/shipments")
     public ResponseEntity<List<Shipment>> getAllShipments() {
@@ -33,13 +52,14 @@ public class AdminController {
         );
     }
 
-    // ==========================================================
+    // =========================================================
     // GET SHIPMENT BY ID
-    // ==========================================================
+    // =========================================================
 
     @GetMapping("/shipments/{id}")
     public ResponseEntity<?> getShipmentById(
-            @PathVariable Long id) {
+            @PathVariable Long id
+    ) {
 
         try {
 
@@ -56,24 +76,19 @@ public class AdminController {
         }
     }
 
-    // ==========================================================
-    // CREATE SHIPMENT
-    // ==========================================================
-    // IMPORTANT:
-    // Uses AdminCreateShipmentRequest so username can be received
-    // and shipment can be assigned to selected customer.
-    // ==========================================================
+    // =========================================================
+    // CREATE SHIPMENT + ASSIGN CUSTOMER
+    // =========================================================
 
     @PostMapping("/shipments")
     public ResponseEntity<?> createShipment(
-            @RequestBody AdminCreateShipmentRequest request) {
+            @RequestBody AdminCreateShipmentRequest request
+    ) {
 
         try {
 
             Shipment savedShipment =
-                    adminService.createShipment(
-                            request
-                    );
+                    adminService.createShipment(request);
 
             return ResponseEntity
                     .status(HttpStatus.CREATED)
@@ -87,14 +102,15 @@ public class AdminController {
         }
     }
 
-    // ==========================================================
+    // =========================================================
     // UPDATE SHIPMENT
-    // ==========================================================
+    // =========================================================
 
     @PutMapping("/shipments/{id}")
     public ResponseEntity<?> updateShipment(
             @PathVariable Long id,
-            @RequestBody Shipment shipment) {
+            @RequestBody Shipment shipment
+    ) {
 
         try {
 
@@ -114,13 +130,14 @@ public class AdminController {
         }
     }
 
-    // ==========================================================
+    // =========================================================
     // DELETE SHIPMENT
-    // ==========================================================
+    // =========================================================
 
     @DeleteMapping("/shipments/{id}")
     public ResponseEntity<?> deleteShipment(
-            @PathVariable Long id) {
+            @PathVariable Long id
+    ) {
 
         try {
 
@@ -138,14 +155,15 @@ public class AdminController {
         }
     }
 
-    // ==========================================================
-    // UPDATE SHIPMENT STATUS
-    // ==========================================================
+    // =========================================================
+    // UPDATE STATUS
+    // =========================================================
 
     @PatchMapping("/shipments/{id}/status")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long id,
-            @RequestParam String status) {
+            @RequestParam String status
+    ) {
 
         try {
 
@@ -165,14 +183,15 @@ public class AdminController {
         }
     }
 
-    // ==========================================================
-    // ASSIGN SHIPMENT TO CUSTOMER
-    // ==========================================================
+    // =========================================================
+    // ASSIGN EXISTING SHIPMENT TO USER
+    // =========================================================
 
     @PatchMapping("/shipments/assign-user")
     public ResponseEntity<?> assignShipmentToUser(
             @RequestParam String trackingNumber,
-            @RequestParam String username) {
+            @RequestParam String username
+    ) {
 
         try {
 
@@ -192,20 +211,19 @@ public class AdminController {
         }
     }
 
-    // ==========================================================
+    // =========================================================
     // GET SHIPMENTS BY STATUS
-    // ==========================================================
+    // =========================================================
 
     @GetMapping("/shipments/status/{status}")
     public ResponseEntity<?> getShipmentsByStatus(
-            @PathVariable String status) {
+            @PathVariable String status
+    ) {
 
         try {
 
             List<Shipment> shipments =
-                    adminService.getShipmentsByStatus(
-                            status
-                    );
+                    adminService.getShipmentsByStatus(status);
 
             return ResponseEntity.ok(shipments);
 
@@ -217,9 +235,9 @@ public class AdminController {
         }
     }
 
-    // ==========================================================
-    // DASHBOARD STATISTICS
-    // ==========================================================
+    // =========================================================
+    // DASHBOARD STATS
+    // =========================================================
 
     @GetMapping("/dashboard/stats")
     public ResponseEntity<?> getDashboardStats() {
@@ -235,9 +253,9 @@ public class AdminController {
         );
     }
 
-    // ==========================================================
-    // DASHBOARD RESPONSE
-    // ==========================================================
+    // =========================================================
+    // DASHBOARD DTO
+    // =========================================================
 
     public static class DashboardStats {
 
@@ -252,7 +270,8 @@ public class AdminController {
                 long pending,
                 long inTransit,
                 long outForDelivery,
-                long delivered) {
+                long delivered
+        ) {
 
             this.total = total;
             this.pending = pending;
